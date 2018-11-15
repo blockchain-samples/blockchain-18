@@ -2,6 +2,19 @@
 #include "block.h"
 #include "gtest/gtest.h"
 
+namespace blockchain_test {
+	unsigned int countLeadingZeroes(std::string str) {
+		unsigned int nLeadingZeroes = 0;
+		for (char c : str) {
+			if (c == '0') {
+				nLeadingZeroes++;
+			}
+		}
+
+		return nLeadingZeroes;
+	}
+}
+
 TEST(TestAddBlock, AddBlockFail) {
 	Blockchain blockchain{};
 	Block block{"data", "074F349C303B4D508D61FE84F020F5314018C2924BA99839F46525A60699ADD2"};
@@ -47,4 +60,12 @@ TEST(TestValidChain, ChainIsValid) {
 	blockchain.add(block4);
 
 	EXPECT_TRUE(blockchain.isValid());
+}
+
+TEST(TestMineBlock, TestMineBlock) {
+	Blockchain chain{ 1 };
+	const Block& prevBlock = chain.getNewestBlock();
+	const Block& newBlock = chain.mineBlock("violet evergarden");
+
+	EXPECT_TRUE(chain.getNewestBlock().getHash() == newBlock.getHash());
 }

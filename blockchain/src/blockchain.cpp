@@ -1,8 +1,10 @@
 ﻿#include "blockchain.h"
 #include "block.h"
 #include "sslevp.h"
+#include <cmath>
 
-Blockchain::Blockchain() {
+Blockchain::Blockchain(unsigned int difficulty) :
+	difficulty_(difficulty) {
 	// create genesis block.
 	Block genesis{"Gensis block", ""};
 	chain_.push_back(genesis);
@@ -68,4 +70,62 @@ const Block& Blockchain::getBlock(unsigned int index) const {
 
 const Block& Blockchain::getNewestBlock() const {
 	return chain_.back();
+}
+
+const Block& Blockchain::mineBlock(std::string data) {
+	return mineBlock(data, difficulty_);
+}
+
+const Block& Blockchain::mineBlock(std::string data, unsigned int difficulty) {
+	const Block& tipOfChain = getNewestBlock();
+	bool isBlockMined = false;
+	do {
+		Block block{ data, tipOfChain.getHash() };
+		isBlockMined = isHashValid(block.getHash(), difficulty);
+
+		if (isBlockMined) {
+			add(block); // maybe check if this passes or not
+		}
+	} while (!isBlockMined);
+
+	return chain_.back();
+}
+
+unsigned int Blockchain::getDifficulty() const {
+	return difficulty_;
+}
+
+void Blockchain::setDifficulty(unsigned int difficulty) {
+	difficulty_ = difficulty;
+}
+
+bool Blockchain::isHashValid(const std::string& hash, unsigned int difficulty) const {
+	// is valid if leads with zeroes equal to difficulty.
+	if (difficulty * 4 > hash.length()) {
+		return false;
+	}
+
+	unsigned int nBytes = std::ceil(difficulty / 4);
+	unsigned int nZeroBytes = std::floor(difficulty / 4);
+
+	// we only need to check bits for 1 character.
+	for (unsigned int i = 0; i < nZeroBytes; ++i) {
+		if (hash[i] != '0') {
+			return false;
+		}
+	}
+
+	if (nZeroBytes < nBytes) {
+		// mask off top part and shift up low 4 bits
+		char c = (0x0F & hash[nBytes - 1]);
+
+		// iterate through 4 bits.
+		for (int i = 3; i > 0; --i) {
+			if ((c >> i) == 1) {
+				return false;
+			}
+		}
+	}
+
+	return true;
 }
